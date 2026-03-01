@@ -77,6 +77,10 @@ Non-interactive:
 /scaffold name=myproject path=~/code/myproject type=cli ci=yes
 ```
 
+## Files
+
+- [`prompts/scaffold.md`](prompts/scaffold.md): The `/scaffold` Claude Code skill (copy to `~/.claude/commands/scaffold.md`)
+
 ## License
 
 [MIT](LICENSE)

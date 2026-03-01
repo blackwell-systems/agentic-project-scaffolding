@@ -2,104 +2,79 @@
 
 [![Blackwell Systems™](https://raw.githubusercontent.com/blackwell-systems/blackwell-docs-theme/main/badge-trademark.svg)](https://github.com/blackwell-systems)
 
-A Claude Code skill that scaffolds new projects interactively. Given a small set of inputs — language, project type, and distribution target — it produces a complete, opinionated initial structure: directory layout, git repository with a `main` branch, README, CLAUDE.md stub, CI workflow, and optionally a goreleaser config and homebrew tap registration.
+A Claude Code skill that scaffolds new projects. It creates the repository structure, initializes git, and produces the files that every project needs before any real work begins — without touching build systems, package manifests, or language tooling.
 
 ## Why
 
-Starting a new project involves a predictable set of decisions and a predictable set of files. Most of those files are boilerplate with a few project-specific values filled in. Doing it by hand is slow and inconsistent. Doing it with a general-purpose scaffolding tool means fighting its opinions. This skill handles the decisions explicitly, asks only what it needs to know, and produces exactly the right structure for the combination of choices made.
+Starting a new project involves a predictable set of decisions and a predictable set of files. Most of those files are boilerplate with a few project-specific values filled in. Doing it by hand is slow and inconsistent. This skill handles the structural decisions explicitly and produces exactly what it knows how to produce — stopping before it reaches the things that vary too much to generalize.
 
-## What It Produces
+## Scope
 
-For every project:
+The skill owns repo structure. It does not own build systems, package managers, language tooling, or distribution config. Those are decisions the developer makes after the repo exists.
 
-- **Directory** at the specified path, created if it does not exist
-- **Git repository** initialized with `main` as the default branch
-- **README.md** covering what the project is, how to install or use it, and any relevant decision context
-- **CLAUDE.md stub** with project-specific context sections for Claude Code to load on each session
-- **CI workflow** (GitHub Actions) appropriate to the language and project type
+**What it produces:**
 
-For Go and Rust projects with homebrew distribution:
+- Directory at the specified path
+- Git repository initialized with `main` as the default branch
+- `README.md` stub
+- `CLAUDE.md` stub with project-specific context sections
+- `.gitignore`
+- GitHub Actions CI skeleton
+- `LICENSE` (MIT, Blackwell Systems)
+- `.github/CODEOWNERS`
+- GitHub repo created and configured with branch protection
 
-- **goreleaser config** (`.goreleaser.yaml`) with platform matrix, archive settings, and checksum configuration
-- **Homebrew tap entry** — a formula stub in the correct tap repository location, ready for wiring to the release pipeline
+**What it does not produce:**
+
+- Build system config (`go.mod`, `Cargo.toml`, `package.json`, `pom.xml`, etc.)
+- Language-specific source stubs
+- Distribution config (goreleaser, cargo-dist, etc.)
+- Package registry entries
+
+Distribution wiring is handled separately by [homebrew-formula-updater](https://github.com/blackwell-systems/homebrew-formula-updater) and [github-release-engineer](https://github.com/blackwell-systems/github-release-engineer) when the project is ready to ship.
 
 ## Decision Points
 
 The skill asks three questions before producing any output:
 
-**1. Language**
+**1. Project name and path**
 
-- `go` — Go CLI tool or MCP server; produces `go.mod`, `main.go` stub, standard package layout
-- `rust` — Rust CLI tool or MCP server; produces `Cargo.toml`, `src/main.rs` stub, standard crate layout
-- `markdown` / `prompt` — Protocol, skill, or documentation repository; no compiled source, produces prompt files and a `docs/` layout
+Where the project lives on disk and what it is called.
 
 **2. Project type**
 
-- `cli` — Command-line tool; produces a `main` entry point, flag parsing stub, and release-oriented CI
-- `mcp-server` — MCP server binary; produces MCP transport scaffolding and appropriate CI
+- `cli` — Command-line tool
+- `mcp-server` — MCP server
+- `library` — Importable package
 - `skill` — Claude Code `/command` skill; produces a `prompts/` layout and install instructions
-- `library` — Importable package; produces library-oriented CI without a release pipeline
-- `protocol` — Coordination or interface specification; produces a `docs/` and `prompts/` layout with no source
+- `protocol` — Coordination or interface specification; produces a `docs/` and `prompts/` layout
 
-**3. Distribution**
+The type drives the README structure, CLAUDE.md sections, and CI shape — not the build system.
 
-- `homebrew` — Generates goreleaser config targeting macOS (arm64, amd64) and Linux (amd64, arm64), plus a homebrew formula stub; only available for `go` and `rust` CLI or MCP server projects
-- `none` — CI publishes artifacts or runs tests but does not wire a tap
+**3. CI**
 
-## Usage with Claude Code
+- `yes` — GitHub Actions workflow with lint, test, and build jobs (generic; the developer fills in the language-specific commands)
+- `no` — No CI generated
 
-This skill ships as a `/scaffold` command for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
-
-### Install
-
-Copy the skill to your global commands directory:
+## Install
 
 ```bash
 cp prompts/scaffold.md ~/.claude/commands/scaffold.md
 ```
 
-### Invoke
+## Usage
 
 ```
 /scaffold
 ```
 
-The skill will ask for:
+The skill asks for project name, path, type, and CI preference, then produces all files and reports exactly what was created.
 
-1. Project name and destination path
-2. Language (`go`, `rust`, or `markdown`)
-3. Project type (`cli`, `mcp-server`, `skill`, `library`, or `protocol`)
-4. Distribution (`homebrew` or `none`)
-
-It will then produce all files, initialize the git repository, and report exactly what was created.
-
-### Non-interactive (one-liner)
+Non-interactive:
 
 ```
-/scaffold name=myproject path=~/code/myproject lang=go type=cli dist=homebrew
+/scaffold name=myproject path=~/code/myproject type=cli ci=yes
 ```
-
-All four parameters can be passed inline to skip the interactive prompts.
-
-## Output Example
-
-For `lang=go type=cli dist=homebrew`, the skill produces:
-
-```
-~/code/myproject/
-  .github/
-    workflows/
-      release.yml
-  cmd/
-    myproject/
-      main.go
-  go.mod
-  .goreleaser.yaml
-  README.md
-  CLAUDE.md
-```
-
-And registers a formula stub in the configured homebrew tap repository.
 
 ## License
 

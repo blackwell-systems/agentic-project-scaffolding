@@ -1,6 +1,7 @@
 # Agentic Project Scaffolding
 
 [![Blackwell Systems™](https://raw.githubusercontent.com/blackwell-systems/blackwell-docs-theme/main/badge-trademark.svg)](https://github.com/blackwell-systems)
+[![Version](https://img.shields.io/github/v/release/blackwell-systems/agentic-project-scaffolding)](https://github.com/blackwell-systems/agentic-project-scaffolding/releases/latest)
 
 A Claude Code skill that scaffolds new projects. It creates the repository structure, initializes git, and produces the files that every project needs before any real work begins — without touching build systems, package manifests, or language tooling.
 
